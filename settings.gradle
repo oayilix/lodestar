@@ -1,4 +1,4 @@
-rootProject.name = "RouterDemo"
+rootProject.name = "lodestar"
 include ':app'
 include ':bm-a'
 include ':bm-b'
