@@ -1,8 +1,8 @@
 package com.oayilix.lodestar.gradle
 
 
-import jdk.internal.org.objectweb.asm.ClassWriter
-import jdk.internal.org.objectweb.asm.MethodVisitor
+import org.objectweb.asm.ClassWriter
+import org.objectweb.asm.MethodVisitor
 import org.objectweb.asm.Opcodes
 
 class RouterMappingBytecodeBuilder implements Opcodes {
