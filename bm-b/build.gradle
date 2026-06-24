@@ -4,8 +4,8 @@ plugins {
 }
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    namespace 'com.oayilix.lodestar.demo.moduleb'
+    compileSdk 34
 
     defaultConfig {
         minSdkVersion 16
