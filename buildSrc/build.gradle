@@ -1,16 +1,22 @@
-// 1、引入 groovy 插件，编译插件工程中的代码
-apply plugin: 'groovy'
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:2.0.21"
+    }
+}
 
-// 2、声明仓库的地址
+apply plugin: 'kotlin'
+apply plugin: 'java-gradle-plugin'
+
 repositories {
     mavenCentral()
     google()
 }
 
-// 3、声明依赖的包
 dependencies {
-    implementation gradleApi()
-    implementation localGroovy()
     implementation 'com.android.tools.build:gradle:8.7.3'
     implementation 'org.ow2.asm:asm:9.7'
+    implementation gradleApi()
 }

@@ -1,19 +1,19 @@
-// 1、应用 java 插件
+// KSP 注解处理器模块
 plugins {
     id 'java-library'
+    id 'org.jetbrains.kotlin.jvm'
 }
 
-// 2、设置源码兼容性
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_7
-    targetCompatibility = JavaVersion.VERSION_1_7
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 }
 
-// 3、添加注解工程的依赖
+kotlin {
+    jvmToolchain(17)
+}
+
 dependencies {
     implementation project(':router-annotations')
-    implementation 'com.google.auto.service:auto-service:1.0-rc6'
-    annotationProcessor 'com.google.auto.service:auto-service:1.0-rc6'
-
-    implementation 'com.squareup:javapoet:1.13.0'
+    implementation 'com.google.devtools.ksp:symbol-processing-api:2.0.21-1.0.28'
 }
