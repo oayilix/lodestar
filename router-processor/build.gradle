@@ -1,4 +1,4 @@
-// KSP 注解处理器模块
+// KSP symbol processor module. / KSP 符号处理器模块。
 plugins {
     id 'java-library'
     id 'org.jetbrains.kotlin.jvm'
