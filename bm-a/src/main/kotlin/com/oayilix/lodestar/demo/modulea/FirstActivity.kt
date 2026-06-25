@@ -3,7 +3,7 @@ package com.oayilix.lodestar.demo.modulea
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.oayilix.lodestar.annotations.Destination
-import com.oayilix.lodestar.api.Lodestar
+import com.oayilix.lodestar.api.navigateTo
 
 @Destination(url = "lodestar://example.com/app/first", description = "first page")
 class FirstActivity : AppCompatActivity() {
@@ -13,11 +13,11 @@ class FirstActivity : AppCompatActivity() {
         setContentView(R.layout.activity_first)
 
         findViewById<android.widget.Button>(R.id.button1).setOnClickListener {
-            Lodestar.navigation(this, "lodestar://example.com/app/second")
+            navigateTo("lodestar://example.com/app/second")
         }
 
         findViewById<android.widget.Button>(R.id.button2).setOnClickListener {
-            Lodestar.navigation(this, "lodestar://example.com/app/third")
+            navigateTo("lodestar://example.com/app/third")
         }
     }
 }

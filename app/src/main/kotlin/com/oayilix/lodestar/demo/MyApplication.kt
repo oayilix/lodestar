@@ -7,6 +7,6 @@ class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        Lodestar.init()
+        Lodestar.initOrThrow()
     }
 }

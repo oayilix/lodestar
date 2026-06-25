@@ -6,7 +6,7 @@ import android.content.Intent
 import android.net.Uri
 
 /**
- * Lodestar SDK entry point that loads the compile-time route table and performs navigation.
+ * Lodestar SDK entry point that loads the compile-time route table and starts route navigation.
  * Lodestar 的运行时入口，负责加载编译期路由表并执行页面导航。
  *
  * Initialization is thread-safe and idempotent; the published route table is immutable.
@@ -63,6 +63,27 @@ object Lodestar {
     }
 
     /**
+     * Initializes Lodestar and throws when the generated mapping cannot be loaded.
+     * 初始化 Lodestar；当生成的路由表无法加载时直接抛出异常。
+     *
+     * This is the concise Application startup API. Use [init] when the app wants to handle
+     * initialization failures explicitly.
+     * 这是更简洁的 Application 启动 API。当 App 需要显式处理初始化失败时，请使用 [init]。
+     *
+     * @return Number of loaded routes. 已加载的路由数量。
+     */
+    @JvmStatic
+    fun initOrThrow(): Int =
+        when (val result = init()) {
+            is InitializationResult.Success -> result.routeCount
+            is InitializationResult.AlreadyInitialized -> result.routeCount
+            is InitializationResult.Failure -> throw IllegalStateException(
+                "Failed to initialize Lodestar routes.",
+                result.cause
+            )
+        }
+
+    /**
      * Navigates to the Activity matching [route]. Query and fragment do not participate in lookup,
      * but the original URI is preserved as `Intent.data` for the destination.
      * 导航到与 [route] 匹配的 Activity。query 和 fragment 不参与路由匹配，
@@ -76,34 +97,34 @@ object Lodestar {
      */
     @JvmStatic
     @JvmOverloads
-    fun navigation(
+    fun navigate(
         context: Context,
         route: String,
         configureIntent: (Intent.() -> Unit)? = null
-    ): NavigationResult {
-        val snapshot = routes ?: return NavigationResult.NotInitialized
+    ): NavigateResult {
+        val snapshot = routes ?: return NavigateResult.NotInitialized
         val normalizedRoute = RouteNormalizer.normalize(route)
-            ?: return NavigationResult.InvalidRoute(route)
+            ?: return NavigateResult.InvalidRoute(route)
         val target = snapshot[normalizedRoute]
-            ?: return NavigationResult.RouteNotFound(normalizedRoute)
+            ?: return NavigateResult.RouteNotFound(normalizedRoute)
 
         return try {
-            val options = navigationIntentOptions(context is Activity, route)
+            val options = navigateIntentOptions(context is Activity, route)
             val intent = Intent(context, target).apply {
                 data = Uri.parse(options.dataUri)
                 if (options.addNewTaskFlag) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 configureIntent?.invoke(this)
             }
             context.startActivity(intent)
-            NavigationResult.Success(normalizedRoute, target)
+            NavigateResult.Success(normalizedRoute, target)
         } catch (cause: Throwable) {
             logger.error("Failed to navigate to '$normalizedRoute'.", cause)
-            NavigationResult.LaunchFailed(normalizedRoute, cause)
+            NavigateResult.LaunchFailed(normalizedRoute, cause)
         }
     }
 
-    internal fun navigationIntentOptions(isActivityContext: Boolean, route: String): NavigationIntentOptions =
-        NavigationIntentOptions(dataUri = route, addNewTaskFlag = !isActivityContext)
+    internal fun navigateIntentOptions(isActivityContext: Boolean, route: String): NavigateIntentOptions =
+        NavigateIntentOptions(dataUri = route, addNewTaskFlag = !isActivityContext)
 
     internal fun resetForTesting() {
         synchronized(initializationLock) {
@@ -113,7 +134,16 @@ object Lodestar {
     }
 }
 
-internal data class NavigationIntentOptions(
+/**
+ * Navigates from any [Context] using Lodestar.
+ * 从任意 [Context] 使用 Lodestar 发起导航。
+ */
+fun Context.navigateTo(
+    route: String,
+    configureIntent: (Intent.() -> Unit)? = null
+): NavigateResult = Lodestar.navigate(this, route, configureIntent)
+
+internal data class NavigateIntentOptions(
     val dataUri: String,
     val addNewTaskFlag: Boolean
 )
@@ -134,22 +164,22 @@ sealed interface InitializationResult {
     }
 }
 
-/** Navigation outcome; expected failures are returned explicitly. 导航状态；所有预期失败均通过返回值表达。 */
-sealed interface NavigationResult {
+/** Navigate result; expected failures are returned explicitly. 导航结果；所有预期失败均通过返回值表达。 */
+sealed interface NavigateResult {
     /** The target Activity was started. 目标 Activity 已启动。 */
-    data class Success(val route: String, val target: Class<out Activity>) : NavigationResult
+    data class Success(val route: String, val target: Class<out Activity>) : NavigateResult
 
-    /** [Lodestar.init] must complete before navigation. 导航前必须先成功执行 [Lodestar.init]。 */
-    data object NotInitialized : NavigationResult
+    /** [Lodestar.init] must complete before navigating. 导航前必须先成功执行 [Lodestar.init]。 */
+    data object NotInitialized : NavigateResult
 
     /** The supplied URI cannot be normalized into a route key. 输入 URI 无法规范化为路由键。 */
-    data class InvalidRoute(val route: String) : NavigationResult
+    data class InvalidRoute(val route: String) : NavigateResult
 
     /** No destination is registered for the normalized route. 规范化路由没有对应目标。 */
-    data class RouteNotFound(val route: String) : NavigationResult
+    data class RouteNotFound(val route: String) : NavigateResult
 
     /** Android rejected or failed to launch the target Activity. Android 拒绝或未能启动目标 Activity。 */
-    data class LaunchFailed(val route: String, val cause: Throwable) : NavigationResult
+    data class LaunchFailed(val route: String, val cause: Throwable) : NavigateResult
 }
 
 /**

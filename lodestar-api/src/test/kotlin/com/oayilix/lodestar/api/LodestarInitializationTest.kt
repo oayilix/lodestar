@@ -22,4 +22,12 @@ class LodestarInitializationTest {
         assertTrue(second is InitializationResult.AlreadyInitialized)
         assertEquals(1, second.routeCount)
     }
+
+    @Test
+    fun initOrThrowReturnsLoadedRouteCount() {
+        val routeCount = Lodestar.initOrThrow()
+
+        assertEquals(1, routeCount)
+        assertEquals(1, Lodestar.initOrThrow())
+    }
 }

@@ -3,7 +3,7 @@
 Lodestar is a lightweight Android Activity routing framework built around compile-time route generation.  
 Lodestar 是一个围绕编译期路由生成构建的轻量级 Android Activity 路由框架。
 
-It uses KSP to validate `@Destination` declarations, a Gradle plugin to aggregate module route registries into the final app, and a small runtime API to perform navigation.  
+It uses KSP to validate `@Destination` declarations, a Gradle plugin to aggregate module route registries into the final app, and a small runtime API to navigate by route.
 它通过 KSP 校验 `@Destination` 声明，通过 Gradle 插件将各模块路由表聚合到最终 App 中，并通过精简的 Runtime API 执行页面跳转。
 
 ## Why Lodestar
@@ -179,71 +179,73 @@ Initialize once, usually in `Application.onCreate()`.
 ```kotlin
 import android.app.Application
 import com.oayilix.lodestar.api.Lodestar
-import com.oayilix.lodestar.api.InitializationResult
 
 class MyApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-
-        when (val result = Lodestar.init()) {
-            is InitializationResult.Success -> {
-                // Routes loaded successfully.
-            }
-            is InitializationResult.AlreadyInitialized -> {
-                // Safe to ignore.
-            }
-            is InitializationResult.Failure -> {
-                // Log or report result.cause.
-            }
-        }
+        Lodestar.initOrThrow()
     }
 }
 ```
 
-`Lodestar.init()` is thread-safe and idempotent. A failed initialization does not publish partial routes.  
-`Lodestar.init()` 是线程安全且幂等的；初始化失败时不会发布部分路由表。
+`Lodestar.initOrThrow()` is the concise startup API. It is thread-safe and idempotent, and it throws if the generated route table cannot be loaded.
+`Lodestar.initOrThrow()` 是简洁的启动 API。它线程安全且幂等；当生成的路由表无法加载时会直接抛出异常。
+
+Use `Lodestar.init()` when you want to handle initialization failures explicitly.
+当你需要显式处理初始化失败时，可以使用 `Lodestar.init()`。
 
 ### 5. Navigate by route
 
-Call `Lodestar.navigation()` with a route URI.  
-使用路由 URI 调用 `Lodestar.navigation()`。
+Call `navigateTo()` from any `Context` with a route URI.
+在任意 `Context` 中使用路由 URI 调用 `navigateTo()`。
 
 ```kotlin
-import com.oayilix.lodestar.api.Lodestar
-import com.oayilix.lodestar.api.NavigationResult
+import com.oayilix.lodestar.api.navigateTo
 
-val result = Lodestar.navigation(
-    context = this,
-    route = "lodestar://example.com/app/second"
-)
-
-when (result) {
-    is NavigationResult.Success -> {
-        // Navigation started.
-    }
-    NavigationResult.NotInitialized -> {
-        // Call Lodestar.init() before navigation.
-    }
-    is NavigationResult.InvalidRoute -> {
-        // Route URI is malformed or relative.
-    }
-    is NavigationResult.RouteNotFound -> {
-        // No destination matches the normalized route key.
-    }
-    is NavigationResult.LaunchFailed -> {
-        // Android rejected or failed to start the Activity.
-    }
-}
+navigateTo("lodestar://example.com/app/second")
 ```
 
-You can configure the `Intent` before launch.  
+You can configure the `Intent` before launch.
 你可以在启动前配置 `Intent`。
 
 ```kotlin
-Lodestar.navigation(this, "lodestar://example.com/app/detail?id=42#comment") {
+navigateTo("lodestar://example.com/app/detail?id=42#comment") {
     putExtra("from", "home")
     addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+}
+```
+
+If you prefer object-style calls, `Lodestar.navigate()` is also available.
+如果你更偏好对象式调用，也可以使用 `Lodestar.navigate()`。
+
+```kotlin
+Lodestar.navigate(this, "lodestar://example.com/app/second")
+```
+
+For advanced error handling, keep the returned `NavigateResult`.
+如果需要高级错误处理，可以保留返回的 `NavigateResult`。
+
+```kotlin
+import com.oayilix.lodestar.api.NavigateResult
+import com.oayilix.lodestar.api.navigateTo
+
+when (val result = navigateTo("lodestar://example.com/app/second")) {
+    is NavigateResult.Success -> {
+        // Navigation started.
+    }
+    NavigateResult.NotInitialized -> {
+        // Call Lodestar.initOrThrow() or Lodestar.init() before navigating.
+    }
+    is NavigateResult.InvalidRoute -> {
+        // Route URI is malformed or relative.
+    }
+    is NavigateResult.RouteNotFound -> {
+        // No destination matches the normalized route key.
+    }
+    is NavigateResult.LaunchFailed -> {
+        // Android rejected or failed to start the Activity.
+    }
 }
 ```
 
@@ -255,7 +257,7 @@ val id = intent.data?.getQueryParameter("id")
 val fragment = intent.data?.fragment
 ```
 
-When navigation starts from a non-Activity `Context`, Lodestar automatically adds `FLAG_ACTIVITY_NEW_TASK`.  
+When navigating from a non-Activity `Context`, Lodestar automatically adds `FLAG_ACTIVITY_NEW_TASK`.
 当从非 Activity `Context` 发起导航时，Lodestar 会自动添加 `FLAG_ACTIVITY_NEW_TASK`。
 
 ## Route matching behavior
@@ -291,7 +293,7 @@ Navigation decision flow:
 
 ```mermaid
 flowchart TD
-    Start["Lodestar.navigation(context, route)\n发起导航"]
+    Start["navigateTo(route) / Lodestar.navigate(context, route)\n发起导航"]
     Init{"Route table initialized?\n路由表是否已初始化？"}
     Normalize{"Route can be normalized?\n路由能否规范化？"}
     Lookup{"Destination found?\n是否找到目标页面？"}
@@ -300,11 +302,11 @@ flowchart TD
     NewTask{"Context is Activity?\nContext 是否为 Activity？"}
     AddFlag["Add FLAG_ACTIVITY_NEW_TASK\n添加 NEW_TASK 标记"]
     Launch["context.startActivity(intent)\n启动目标 Activity"]
-    Success["NavigationResult.Success\n导航成功"]
-    NotInitialized["NavigationResult.NotInitialized\n未初始化"]
-    Invalid["NavigationResult.InvalidRoute\n非法路由"]
-    NotFound["NavigationResult.RouteNotFound\n路由未找到"]
-    Failed["NavigationResult.LaunchFailed\n启动失败"]
+    Success["NavigateResult.Success\n导航成功"]
+    NotInitialized["NavigateResult.NotInitialized\n未初始化"]
+    Invalid["NavigateResult.InvalidRoute\n非法路由"]
+    NotFound["NavigateResult.RouteNotFound\n路由未找到"]
+    Failed["NavigateResult.LaunchFailed\n启动失败"]
 
     Start --> Init
     Init -- "No / 否" --> NotInitialized
@@ -339,7 +341,7 @@ flowchart LR
     Mapping["LodestarMapping\n稳定聚合入口"]
     Init["Lodestar.init()\n初始化加载"]
     ImmutableMap["Immutable route map\n不可变路由表"]
-    Navigate["Lodestar.navigation()\n运行时导航"]
+    Navigate["navigateTo() / Lodestar.navigate()\n运行时导航"]
 
     Source --> Validate
     Validate --> Registry
@@ -420,7 +422,7 @@ com.oayilix.lodestar.mapping.LodestarMapping
 The runtime loads this stable class name during initialization.  
 运行时会在初始化阶段加载这个稳定类名。
 
-### 3. Runtime navigation
+### 3. Runtime navigate
 
 `lodestar-api` exposes the `Lodestar` entry point.  
 `lodestar-api` 暴露 `Lodestar` 入口。
@@ -428,12 +430,16 @@ The runtime loads this stable class name during initialization.
 Runtime behavior:  
 运行时行为：
 
-- `Lodestar.init()` loads `LodestarMapping.get()` by stable class name.  
-  `Lodestar.init()` 通过稳定类名加载 `LodestarMapping.get()`。
+- `Lodestar.initOrThrow()` is the concise startup API, while `Lodestar.init()` exposes structured initialization results.
+  `Lodestar.initOrThrow()` 是简洁启动 API，`Lodestar.init()` 则暴露结构化初始化结果。
+- Both initialization APIs load `LodestarMapping.get()` by stable class name.
+  两种初始化 API 都会通过稳定类名加载 `LodestarMapping.get()`。
 - The loaded map is verified and then published as an immutable map.  
   加载到的 map 会先被校验，然后作为不可变 map 发布。
-- `Lodestar.navigation()` normalizes the caller route, performs O(1) lookup, builds an `Intent`, preserves the original route in `Intent.data`, and returns a structured `NavigationResult`.  
-  `Lodestar.navigation()` 会规范化调用方路由、执行 O(1) 查找、构建 `Intent`、将原始路由保存在 `Intent.data` 中，并返回结构化的 `NavigationResult`。
+- `navigateTo()` and `Lodestar.navigate()` share the same implementation.
+  `navigateTo()` 和 `Lodestar.navigate()` 共享同一套实现。
+- The implementation normalizes the caller route, performs O(1) lookup, builds an `Intent`, preserves the original route in `Intent.data`, and returns a structured `NavigateResult`.
+  该实现会规范化调用方路由、执行 O(1) 查找、构建 `Intent`、将原始路由保存在 `Intent.data` 中，并返回结构化的 `NavigateResult`。
 
 ## R8 / ProGuard
 

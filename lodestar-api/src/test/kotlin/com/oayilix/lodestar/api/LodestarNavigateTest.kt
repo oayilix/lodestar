@@ -7,7 +7,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-class LodestarNavigationTest {
+class LodestarNavigateTest {
 
     private lateinit var context: RecordingContext
 
@@ -19,9 +19,9 @@ class LodestarNavigationTest {
 
     @Test
     fun returnsNotInitializedBeforeRouteTableIsLoaded() {
-        val result = Lodestar.navigation(context, "lodestar://example.com/app/test")
+        val result = Lodestar.navigate(context, "lodestar://example.com/app/test")
 
-        assertEquals(NavigationResult.NotInitialized, result)
+        assertEquals(NavigateResult.NotInitialized, result)
         assertEquals(null, context.startedIntent)
     }
 
@@ -29,9 +29,9 @@ class LodestarNavigationTest {
     fun rejectsInvalidRouteAfterInitialization() {
         Lodestar.init()
 
-        val result = Lodestar.navigation(context, " lodestar://example.com/app/test")
+        val result = Lodestar.navigate(context, " lodestar://example.com/app/test")
 
-        assertEquals(NavigationResult.InvalidRoute(" lodestar://example.com/app/test"), result)
+        assertEquals(NavigateResult.InvalidRoute(" lodestar://example.com/app/test"), result)
         assertEquals(null, context.startedIntent)
     }
 
@@ -39,9 +39,27 @@ class LodestarNavigationTest {
     fun returnsRouteNotFoundForMissingDestination() {
         Lodestar.init()
 
-        val result = Lodestar.navigation(context, "lodestar://example.com/app/missing?id=42")
+        val result = Lodestar.navigate(context, "lodestar://example.com/app/missing?id=42")
 
-        assertEquals(NavigationResult.RouteNotFound("lodestar://example.com/app/missing"), result)
+        assertEquals(NavigateResult.RouteNotFound("lodestar://example.com/app/missing"), result)
+        assertEquals(null, context.startedIntent)
+    }
+
+    @Test
+    fun returnsNotInitializedFromNavigate() {
+        val result = Lodestar.navigate(context, "lodestar://example.com/app/test")
+
+        assertEquals(NavigateResult.NotInitialized, result)
+        assertEquals(null, context.startedIntent)
+    }
+
+    @Test
+    fun contextNavigateToDelegatesToLodestar() {
+        Lodestar.init()
+
+        val result = context.navigateTo(" lodestar://example.com/app/test")
+
+        assertEquals(NavigateResult.InvalidRoute(" lodestar://example.com/app/test"), result)
         assertEquals(null, context.startedIntent)
     }
 
@@ -49,7 +67,7 @@ class LodestarNavigationTest {
     fun plansOriginalRouteDataAndNewTaskFlagForNonActivityContext() {
         val route = "lodestar://example.com/app/test?id=42#section"
 
-        val options = Lodestar.navigationIntentOptions(isActivityContext = false, route = route)
+        val options = Lodestar.navigateIntentOptions(isActivityContext = false, route = route)
 
         assertEquals(route, options.dataUri)
         assertTrue(options.addNewTaskFlag)
@@ -57,7 +75,7 @@ class LodestarNavigationTest {
 
     @Test
     fun doesNotPlanNewTaskFlagForActivityContext() {
-        val options = Lodestar.navigationIntentOptions(
+        val options = Lodestar.navigateIntentOptions(
             isActivityContext = true,
             route = "lodestar://example.com/app/test"
         )
