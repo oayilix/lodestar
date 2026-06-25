@@ -70,13 +70,15 @@ class DestinationProcessor(
         }
         val generatedClassName = LodestarRegistrySourceGenerator.className(routeEntries)
         val sourceFiles = sortedRoutes.mapNotNull { it.symbol.containingFile }.distinct()
-        val content = LodestarRegistrySourceGenerator.generateJava(generatedClassName, routeEntries)
+        val content = LodestarRegistrySourceGenerator.generateKotlin(generatedClassName, routeEntries)
 
         codeGenerator.createNewFile(
             Dependencies(aggregating = true, *sourceFiles.toTypedArray()),
             GENERATED_PACKAGE,
             generatedClassName,
-            "java"
+            // KotlinPoet emits Kotlin source, so KSP must place the file under generated .kt sources.
+            // KotlinPoet 输出 Kotlin 源码，因此 KSP 必须将文件写入生成的 .kt 源码目录。
+            "kt"
         ).bufferedWriter(Charsets.UTF_8).use { it.write(content) }
 
         generated = true

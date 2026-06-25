@@ -32,10 +32,11 @@ class LodestarRegistrySourceGeneratorTest {
         )
         val className = LodestarRegistrySourceGenerator.className(routes)
 
-        val source = LodestarRegistrySourceGenerator.generateJava(className, routes)
+        val source = LodestarRegistrySourceGenerator.generateKotlin(className, routes)
 
-        assertTrue(source.contains("public final class $className"))
-        assertTrue(source.contains("routes.put(\"lodestar://example.com/app/quote\\\"page\", com.example.QuotedActivity.class);"))
-        assertTrue(source.contains("return Collections.unmodifiableMap(routes);"))
+        assertTrue(source.contains("public object $className"))
+        assertTrue(source.contains("@JvmStatic"))
+        assertTrue(source.contains("routes[\"lodestar://example.com/app/quote\\\"page\"] = QuotedActivity::class.java"))
+        assertTrue(source.contains("return Collections.unmodifiableMap(routes)"))
     }
 }

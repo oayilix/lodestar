@@ -369,21 +369,28 @@ For every route declaration, it validates the target and route contract.
 - Routes must be unique inside the declaring module.  
   声明模块内的路由必须唯一。
 
-The processor then generates a deterministic module registry.  
-处理器随后生成确定性的模块局部路由表。
+The processor then uses KotlinPoet to generate a deterministic module registry.
+处理器随后使用 KotlinPoet 生成确定性的模块局部路由表。
 
-```java
-public final class LodestarRegistry_xxxxxxxx {
-    public static Map<String, Class<? extends Activity>> get() {
-        Map<String, Class<? extends Activity>> routes = new LinkedHashMap<>();
-        routes.put("lodestar://example.com/app/first", FirstActivity.class);
-        return Collections.unmodifiableMap(routes);
+```kotlin
+public object LodestarRegistry_xxxxxxxx {
+    @JvmStatic
+    public fun get(): Map<String, Class<out Activity>> {
+        val routes = LinkedHashMap<String, Class<out Activity>>()
+        routes["lodestar://example.com/app/first"] = FirstActivity::class.java
+        return Collections.unmodifiableMap(routes)
     }
 }
 ```
 
 Generated registries use direct Activity class literals. This is intentional: R8 can see and rewrite these references safely.  
 生成的路由表使用 Activity 类字面量直接引用。这是刻意设计的：R8 可以安全识别并重写这些引用。
+
+KotlinPoet is used to avoid manually concatenating source text. It handles imports, type names, generics, and route string escaping while keeping the generated source readable during debugging.
+使用 KotlinPoet 是为了避免手动拼接源码文本。它会处理 import、类型名、泛型和路由字符串转义，同时保留生成源码的可读性，方便调试。
+
+`@JvmStatic` is required because the Gradle aggregation step invokes every registry through a JVM static `get()` method.
+必须保留 `@JvmStatic`，因为 Gradle 聚合阶段会通过 JVM 静态 `get()` 方法调用每个局部路由表。
 
 ### 2. Application classpath aggregation
 
