@@ -14,7 +14,7 @@ kotlin {
 }
 
 dependencies {
-    implementation project(':router-annotations')
+    implementation project(':lodestar-annotations')
     implementation 'com.google.devtools.ksp:symbol-processing-api:2.0.21-1.0.28'
 
     testImplementation 'junit:junit:4.13.2'

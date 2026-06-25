@@ -44,5 +44,5 @@ dependencies {
 
     implementation project(':bm-a')
     implementation project(':bm-b')
-    implementation project(':router-api')
+    implementation project(':lodestar-api')
 }
