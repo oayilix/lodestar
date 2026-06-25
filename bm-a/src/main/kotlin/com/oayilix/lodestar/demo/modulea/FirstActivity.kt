@@ -3,9 +3,9 @@ package com.oayilix.lodestar.demo.modulea
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.oayilix.lodestar.annotations.Destination
-import com.oayilix.lodestar.api.Router
+import com.oayilix.lodestar.api.Lodestar
 
-@Destination(url = "router://example.com/app/first", description = "first page")
+@Destination(url = "lodestar://example.com/app/first", description = "first page")
 class FirstActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -13,11 +13,11 @@ class FirstActivity : AppCompatActivity() {
         setContentView(R.layout.activity_first)
 
         findViewById<android.widget.Button>(R.id.button1).setOnClickListener {
-            Router.navigation(this, "router://example.com/app/second")
+            Lodestar.navigation(this, "lodestar://example.com/app/second")
         }
 
         findViewById<android.widget.Button>(R.id.button2).setOnClickListener {
-            Router.navigation(this, "router://example.com/app/third")
+            Lodestar.navigation(this, "lodestar://example.com/app/third")
         }
     }
 }

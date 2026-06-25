@@ -13,7 +13,7 @@ import java.util.TreeSet
  * Discovers generated registries and rejects duplicate routes while visiting class bytecode.
  * 在遍历 class 字节码时发现生成的路由表，并拒绝重复路由。
  */
-internal class RouterMappingCollector {
+internal class LodestarMappingCollector {
 
     private val registryNames = TreeSet<String>()
     private val routeOwners = TreeMap<String, String>()

@@ -14,7 +14,7 @@ import org.gradle.api.Project
  * cross-module aggregate.
  * Library 模块只通过 KSP 生成局部路由表；最终的跨模块聚合由 application 负责。
  */
-class RouterPlugin : Plugin<Project> {
+class LodestarPlugin : Plugin<Project> {
 
     override fun apply(project: Project) {
         // Configure lazily so plugin application order does not affect behavior.
@@ -26,7 +26,7 @@ class RouterPlugin : Plugin<Project> {
             androidComponents.onVariants { variant ->
                 val generateTask = project.tasks.register(
                     "generateLodestarRoutes${variant.name.replaceFirstChar { it.uppercase() }}",
-                    GenerateRouterMappingTask::class.java
+                    GenerateLodestarMappingTask::class.java
                 )
 
                 // ALL includes project classes and dependency classes, which is required for

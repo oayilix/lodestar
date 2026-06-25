@@ -24,9 +24,9 @@ import org.objectweb.asm.Opcodes.V1_8
  * Registry calls are direct bytecode references, allowing R8 to inline them without reflection.
  * 路由表调用采用直接字节码引用，使 R8 无需反射即可安全内联。
  */
-internal object RouterMappingBytecodeBuilder {
+internal object LodestarMappingBytecodeBuilder {
 
-    const val CLASS_NAME = "com/oayilix/lodestar/mapping/RouterMapping"
+    const val CLASS_NAME = "com/oayilix/lodestar/mapping/LodestarMapping"
 
     fun build(registryNames: Collection<String>): ByteArray {
         val writer = ClassWriter(ClassWriter.COMPUTE_FRAMES or ClassWriter.COMPUTE_MAXS)

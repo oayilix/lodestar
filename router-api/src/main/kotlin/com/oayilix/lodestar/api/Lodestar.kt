@@ -3,17 +3,18 @@ package com.oayilix.lodestar.api
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 
 /**
- * Runtime entry point that loads the compile-time route table and performs navigation.
+ * Lodestar SDK entry point that loads the compile-time route table and performs navigation.
  * Lodestar 的运行时入口，负责加载编译期路由表并执行页面导航。
  *
  * Initialization is thread-safe and idempotent; the published route table is immutable.
  * 初始化是线程安全且幂等的；成功后发布的路由表不可变。
  */
-object Router {
+object Lodestar {
 
-    private const val GENERATED_MAPPING = "com.oayilix.lodestar.mapping.RouterMapping"
+    private const val GENERATED_MAPPING = "com.oayilix.lodestar.mapping.LodestarMapping"
     private val initializationLock = Any()
 
     @Volatile
@@ -62,8 +63,10 @@ object Router {
     }
 
     /**
-     * Navigates to the Activity matching [route]. Query and fragment do not participate in lookup.
-     * 导航到与 [route] 匹配的 Activity。query 和 fragment 不参与路由匹配。
+     * Navigates to the Activity matching [route]. Query and fragment do not participate in lookup,
+     * but the original URI is preserved as `Intent.data` for the destination.
+     * 导航到与 [route] 匹配的 Activity。query 和 fragment 不参与路由匹配，
+     * 但原始 URI 会作为 `Intent.data` 保留给目标页使用。
      *
      * `FLAG_ACTIVITY_NEW_TASK` is added automatically when [context] is not an Activity.
      * 当 [context] 不是 Activity 时会自动添加 `FLAG_ACTIVITY_NEW_TASK`。
@@ -85,8 +88,10 @@ object Router {
             ?: return NavigationResult.RouteNotFound(normalizedRoute)
 
         return try {
+            val options = navigationIntentOptions(context is Activity, route)
             val intent = Intent(context, target).apply {
-                if (context !is Activity) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                data = Uri.parse(options.dataUri)
+                if (options.addNewTaskFlag) addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 configureIntent?.invoke(this)
             }
             context.startActivity(intent)
@@ -97,6 +102,9 @@ object Router {
         }
     }
 
+    internal fun navigationIntentOptions(isActivityContext: Boolean, route: String): NavigationIntentOptions =
+        NavigationIntentOptions(dataUri = route, addNewTaskFlag = !isActivityContext)
+
     internal fun resetForTesting() {
         synchronized(initializationLock) {
             routes = null
@@ -104,6 +112,11 @@ object Router {
         }
     }
 }
+
+internal data class NavigationIntentOptions(
+    val dataUri: String,
+    val addNewTaskFlag: Boolean
+)
 
 /** Initialization outcome. 初始化状态。 */
 sealed interface InitializationResult {
@@ -126,7 +139,7 @@ sealed interface NavigationResult {
     /** The target Activity was started. 目标 Activity 已启动。 */
     data class Success(val route: String, val target: Class<out Activity>) : NavigationResult
 
-    /** [Router.init] must complete before navigation. 导航前必须先成功执行 [Router.init]。 */
+    /** [Lodestar.init] must complete before navigation. 导航前必须先成功执行 [Lodestar.init]。 */
     data object NotInitialized : NavigationResult
 
     /** The supplied URI cannot be normalized into a route key. 输入 URI 无法规范化为路由键。 */

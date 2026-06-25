@@ -28,7 +28,7 @@ import java.util.zip.ZipEntry
  * 输入与 ZIP 条目均稳定排序，并固定时间戳，以确保输出可复现。
  */
 @CacheableTask
-abstract class GenerateRouterMappingTask : DefaultTask() {
+abstract class GenerateLodestarMappingTask : DefaultTask() {
 
     @get:InputFiles
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -43,7 +43,7 @@ abstract class GenerateRouterMappingTask : DefaultTask() {
 
     @TaskAction
     fun generate() {
-        val collector = RouterMappingCollector()
+        val collector = LodestarMappingCollector()
         val entries = TreeMap<String, ByteArray>()
         val services = TreeMap<String, TreeSet<String>>()
 
@@ -77,8 +77,8 @@ abstract class GenerateRouterMappingTask : DefaultTask() {
             entries[name] = implementations.joinToString(separator = "\n", postfix = "\n")
                 .toByteArray(Charsets.UTF_8)
         }
-        entries["${RouterMappingBytecodeBuilder.CLASS_NAME}.class"] =
-            RouterMappingBytecodeBuilder.build(collector.registryNames())
+        entries["${LodestarMappingBytecodeBuilder.CLASS_NAME}.class"] =
+            LodestarMappingBytecodeBuilder.build(collector.registryNames())
 
         val outputFile = output.get().asFile
         outputFile.parentFile.mkdirs()
@@ -98,10 +98,10 @@ abstract class GenerateRouterMappingTask : DefaultTask() {
         bytes: ByteArray,
         entries: MutableMap<String, ByteArray>,
         services: MutableMap<String, TreeSet<String>>,
-        collector: RouterMappingCollector
+        collector: LodestarMappingCollector
     ) {
         val name = rawName.replace('\\', '/')
-        if (name == "${RouterMappingBytecodeBuilder.CLASS_NAME}.class" || isSignatureFile(name)) return
+        if (name == "${LodestarMappingBytecodeBuilder.CLASS_NAME}.class" || isSignatureFile(name)) return
 
         collector.collect(name, bytes)
 

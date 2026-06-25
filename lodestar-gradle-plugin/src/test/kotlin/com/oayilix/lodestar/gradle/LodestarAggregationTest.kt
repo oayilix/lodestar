@@ -12,27 +12,27 @@ import org.objectweb.asm.Opcodes.ARETURN
 import org.objectweb.asm.Opcodes.POP
 import org.objectweb.asm.Opcodes.V1_8
 
-class RouterAggregationTest {
+class LodestarAggregationTest {
 
     @Test
     fun aggregateBytecodeIsDeterministic() {
-        val first = RouterMappingBytecodeBuilder.build(listOf("mapping/B", "mapping/A"))
-        val second = RouterMappingBytecodeBuilder.build(listOf("mapping/A", "mapping/B"))
+        val first = LodestarMappingBytecodeBuilder.build(listOf("mapping/B", "mapping/A"))
+        val second = LodestarMappingBytecodeBuilder.build(listOf("mapping/A", "mapping/B"))
         assertArrayEquals(first, second)
     }
 
     @Test
     fun duplicateRoutesAcrossRegistriesFailTheBuild() {
-        val collector = RouterMappingCollector()
+        val collector = LodestarMappingCollector()
         collector.collect(
             "com/oayilix/lodestar/mapping/LodestarRegistry_a.class",
-            registryBytecode("com/oayilix/lodestar/mapping/LodestarRegistry_a", "router://example.com/a")
+            registryBytecode("com/oayilix/lodestar/mapping/LodestarRegistry_a", "lodestar://example.com/a")
         )
 
         assertThrows(GradleException::class.java) {
             collector.collect(
                 "com/oayilix/lodestar/mapping/LodestarRegistry_b.class",
-                registryBytecode("com/oayilix/lodestar/mapping/LodestarRegistry_b", "router://example.com/a")
+                registryBytecode("com/oayilix/lodestar/mapping/LodestarRegistry_b", "lodestar://example.com/a")
             )
         }
     }

@@ -36,8 +36,8 @@ gradlePlugin {
     plugins {
         lodestar {
             id = 'com.oayilix.lodestar'
-            implementationClass = 'com.oayilix.lodestar.gradle.RouterPlugin'
-            displayName = 'Lodestar Android Router Plugin'
+            implementationClass = 'com.oayilix.lodestar.gradle.LodestarPlugin'
+            displayName = 'Lodestar Android Plugin'
             description = 'Aggregates deterministic Lodestar route registries for Android applications.'
         }
     }
