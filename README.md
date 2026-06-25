@@ -42,6 +42,31 @@ lodestar
 └── lodestar-gradle-plugin    # Gradle aggregation plugin / Gradle 聚合插件
 ```
 
+Module relationship overview:
+模块关系概览：
+
+```mermaid
+flowchart LR
+    App["app\nDemo Application / 示例 App"]
+    ModuleA["bm-a\nBusiness Module A / 业务模块 A"]
+    ModuleB["bm-b\nBusiness Module B / 业务模块 B"]
+    API["lodestar-api\nRuntime API / 运行时 API"]
+    Annotations["lodestar-annotations\n@Destination / 路由注解"]
+    Processor["lodestar-processor\nKSP Processor / KSP 处理器"]
+    Plugin["lodestar-gradle-plugin\nGradle Plugin / Gradle 插件"]
+
+    App --> ModuleA
+    App --> ModuleB
+    App --> API
+    ModuleA --> API
+    ModuleB --> API
+    ModuleA --> Annotations
+    ModuleB --> Annotations
+    ModuleA -. "ksp / 编译期处理" .-> Processor
+    ModuleB -. "ksp / 编译期处理" .-> Processor
+    Plugin -. "aggregate app variant classes\n聚合 App variant classpath" .-> App
+```
+
 Current development setup resolves the Gradle plugin from the local included build.  
 当前开发环境通过本地 included build 解析 Gradle 插件。
 
@@ -261,10 +286,69 @@ Data:   LODESTAR://Example.COM/app/./first?id=42#section
 The destination Activity receives the original route as `Intent.data`.  
 目标 Activity 会通过 `Intent.data` 接收原始路由。
 
+Navigation decision flow:
+导航决策流程：
+
+```mermaid
+flowchart TD
+    Start["Lodestar.navigation(context, route)\n发起导航"]
+    Init{"Route table initialized?\n路由表是否已初始化？"}
+    Normalize{"Route can be normalized?\n路由能否规范化？"}
+    Lookup{"Destination found?\n是否找到目标页面？"}
+    Build["Build Intent\n构建 Intent"]
+    Data["Set original route as Intent.data\n将原始路由写入 Intent.data"]
+    NewTask{"Context is Activity?\nContext 是否为 Activity？"}
+    AddFlag["Add FLAG_ACTIVITY_NEW_TASK\n添加 NEW_TASK 标记"]
+    Launch["context.startActivity(intent)\n启动目标 Activity"]
+    Success["NavigationResult.Success\n导航成功"]
+    NotInitialized["NavigationResult.NotInitialized\n未初始化"]
+    Invalid["NavigationResult.InvalidRoute\n非法路由"]
+    NotFound["NavigationResult.RouteNotFound\n路由未找到"]
+    Failed["NavigationResult.LaunchFailed\n启动失败"]
+
+    Start --> Init
+    Init -- "No / 否" --> NotInitialized
+    Init -- "Yes / 是" --> Normalize
+    Normalize -- "No / 否" --> Invalid
+    Normalize -- "Yes / 是" --> Lookup
+    Lookup -- "No / 否" --> NotFound
+    Lookup -- "Yes / 是" --> Build
+    Build --> Data
+    Data --> NewTask
+    NewTask -- "No / 否" --> AddFlag
+    NewTask -- "Yes / 是" --> Launch
+    AddFlag --> Launch
+    Launch -- "Started / 已启动" --> Success
+    Launch -- "Exception / 异常" --> Failed
+```
+
 ## Core implementation
 
 Lodestar is split into three phases.  
 Lodestar 分为三个阶段。
+
+Build-time and runtime pipeline:
+构建期与运行时流水线：
+
+```mermaid
+flowchart LR
+    Source["@Destination Activity source\n带注解的 Activity 源码"]
+    Validate["KSP validation\nKSP 校验"]
+    Registry["LodestarRegistry_* per module\n每个模块的局部路由表"]
+    Aggregate["Gradle app variant aggregation\nGradle App variant 聚合"]
+    Mapping["LodestarMapping\n稳定聚合入口"]
+    Init["Lodestar.init()\n初始化加载"]
+    ImmutableMap["Immutable route map\n不可变路由表"]
+    Navigate["Lodestar.navigation()\n运行时导航"]
+
+    Source --> Validate
+    Validate --> Registry
+    Registry --> Aggregate
+    Aggregate --> Mapping
+    Mapping --> Init
+    Init --> ImmutableMap
+    ImmutableMap --> Navigate
+```
 
 ### 1. Compile-time route generation
 
