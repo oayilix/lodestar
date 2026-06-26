@@ -1,0 +1,48 @@
+plugins {
+    id("org.jetbrains.kotlin.jvm") version "2.0.21"
+    id("java-gradle-plugin")
+    id("maven-publish")
+}
+
+group = "io.github.oayilix"
+version = "0.1.0-SNAPSHOT"
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+kotlin {
+    jvmToolchain(17)
+}
+
+dependencies {
+    compileOnly("com.android.tools.build:gradle:8.7.3")
+    implementation("org.ow2.asm:asm:9.7")
+
+    testImplementation(gradleTestKit())
+    testImplementation("org.junit.jupiter:junit-jupiter:5.11.4")
+}
+
+gradlePlugin {
+    plugins {
+        create("lodestar") {
+            id = "com.oayilix.lodestar"
+            implementationClass = "com.oayilix.lodestar.gradle.LodestarPlugin"
+            displayName = "Lodestar Android Plugin"
+            description = "Aggregates deterministic Lodestar route registries for Android applications."
+        }
+    }
+}
+
+tasks.withType<Test>().configureEach {
+    useJUnitPlatform()
+}

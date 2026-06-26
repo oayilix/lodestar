@@ -1,7 +1,7 @@
 // Apply the Java and Kotlin library plugins. / 应用 Java 与 Kotlin library 插件。
 plugins {
-    id 'java-library'
-    id 'org.jetbrains.kotlin.jvm'
+    id("java-library")
+    id("org.jetbrains.kotlin.jvm")
 }
 
 // Compile the public annotation artifact with the configured JDK toolchain. / 使用指定 JDK 工具链编译公共注解制品。

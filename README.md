@@ -70,9 +70,9 @@ flowchart LR
 Current development setup resolves the Gradle plugin from the local included build.  
 当前开发环境通过本地 included build 解析 Gradle 插件。
 
-```gradle
+```kotlin
 pluginManagement {
-    includeBuild('lodestar-gradle-plugin')
+    includeBuild("lodestar-gradle-plugin")
 }
 ```
 
@@ -89,15 +89,15 @@ This section describes how to use Lodestar from source in the current repository
 The application module owns the final cross-module route table, so it must apply the Lodestar plugin.  
 最终的跨模块路由表由 application 模块持有，因此 App 模块必须应用 Lodestar 插件。
 
-```gradle
+```kotlin
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'com.oayilix.lodestar'
+    id("com.android.application")
+    id("org.jetbrains.kotlin.android")
+    id("com.oayilix.lodestar")
 }
 
 dependencies {
-    implementation project(':lodestar-api')
+    implementation(project(":lodestar-api"))
 }
 ```
 
@@ -106,18 +106,18 @@ dependencies {
 Each module that declares `@Destination` routes should apply KSP and depend on the annotation, processor, and runtime API.  
 每个声明 `@Destination` 路由的模块都应启用 KSP，并依赖注解、处理器和运行时 API。
 
-```gradle
+```kotlin
 plugins {
-    id 'com.android.library'
-    id 'org.jetbrains.kotlin.android'
-    id 'com.google.devtools.ksp'
-    id 'com.oayilix.lodestar'
+    id("com.android.library")
+    id("org.jetbrains.kotlin.android")
+    id("com.google.devtools.ksp")
+    id("com.oayilix.lodestar")
 }
 
 dependencies {
-    implementation project(':lodestar-annotations')
-    ksp project(':lodestar-processor')
-    implementation project(':lodestar-api')
+    implementation(project(":lodestar-annotations"))
+    add("ksp", project(":lodestar-processor"))
+    implementation(project(":lodestar-api"))
 }
 ```
 
@@ -502,16 +502,16 @@ The current repository is ready for source-level usage and internal validation, 
 After publishing, a consumer project should be able to use a shape similar to the following.  
 发布后，消费方项目应可以使用类似下面的接入方式。
 
-```gradle
+```kotlin
 plugins {
-    id 'com.oayilix.lodestar' version '<lodestar-version>'
-    id 'com.google.devtools.ksp'
+    id("com.oayilix.lodestar") version "<lodestar-version>"
+    id("com.google.devtools.ksp")
 }
 
 dependencies {
-    implementation 'io.github.oayilix:lodestar-api:<lodestar-version>'
-    implementation 'io.github.oayilix:lodestar-annotations:<lodestar-version>'
-    ksp 'io.github.oayilix:lodestar-processor:<lodestar-version>'
+    implementation("io.github.oayilix:lodestar-api:<lodestar-version>")
+    implementation("io.github.oayilix:lodestar-annotations:<lodestar-version>")
+    add("ksp", "io.github.oayilix:lodestar-processor:<lodestar-version>")
 }
 ```
 

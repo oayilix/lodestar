@@ -6,4 +6,4 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'lodestar-gradle-plugin'
+rootProject.name = "lodestar-gradle-plugin"
